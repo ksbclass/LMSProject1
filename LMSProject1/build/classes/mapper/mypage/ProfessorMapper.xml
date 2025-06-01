@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--  src/mapper/professor.xml -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- sql문장 설정 -->
+
+<mapper namespace="professor">
+
+	<!-- 아이디중복체크 쿼리(존재한다면 1이 반환될것) -->
+	<select id="cnt" resultType="int" parameterType="String">
+	select count(*) from professor where professor_id=#{value}
+	</select>
+	
+	<!--Professor객체를 받아 테이블에 insert하는 문장-->
+	<select id="insert" parameterType="Professor">
+	insert  into professor 
+	(
+	professor_id , professor_name , professor_email,
+	professor_birthday , professor_phone , dept_id,
+	professor_img , professor_password
+	)
+	values
+	(
+	#{professorId},#{professorName},#{professorEmail},
+	#{professorBirthday},#{professorPhone},#{deptId},
+	#{professorImg},#{professorPassword}
+	)
+	</select>
+	
+	<!--professor_id를 가지는   컬럼조회-->
+	<select id="selectOne" resultType="Professor" parameterType="String">
+		select * from professor where professor_id=#{professorId}
+	</select>
+
+<!-- id가 일치 시 비밀번호를 업데이트하는 문장 -->	
+<update id="tempPw" parameterType="UpdateProPwDto">
+	update professor set professor_password=#{professorNewPassword}
+	where professor_id = #{professorId} 
+</update>
+</mapper>

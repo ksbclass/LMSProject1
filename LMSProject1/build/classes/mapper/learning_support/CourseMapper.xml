@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="course">
+
+	<select id="selectColleges" resultType="string">
+	    SELECT DISTINCT college
+	    FROM dept
+	    WHERE college IS NOT NULL
+	    ORDER BY college
+	</select>
+	
+	<select id="selectDepartments" resultType="DeptDto">
+	    select dept_id, dept_name
+		from   dept
+		where  1=1
+		<if test="college != null and college != ''">
+		and    college = #{college};
+		</if>
+	</select>
+	
+	<!-- 강의목록 Row수 조회 -->
+    <select id="countCourses" resultType="int">
+	    SELECT      COUNT(*) 
+        FROM 		course c
+	    JOIN        professor p ON c.professor_id = p.professor_id
+	    JOIN        dept d ON c.dept_id = d.dept_id
+	    LEFT JOIN   registration r ON c.course_id = r.course_id AND r.student_id = #{studentId}
+	    WHERE       c.course_status = 'OPEN'
+	    AND   	    r.registration_id IS NULL
+	    <if test="college != null and college != ''">
+	        AND d.college = #{college}
+	    </if>
+	    <if test="deptId != null and deptId != ''">
+	        AND c.dept_id = #{deptId}
+	    </if>
+	    <if test="courseId != null and courseId != ''">
+	        AND c.course_id = #{courseId}
+	    </if>
+	    <if test="courseName != null and courseName != ''">
+	        AND c.course_name LIKE CONCAT('%', #{courseName}, '%')
+	    </if>
+	</select>
+	
+	<select id="searchCourse" resultType="CourseDto">
+	    SELECT 
+		        c.course_id, 
+		        c.dept_id, 
+		        c.professor_id, 
+		        p.professor_name, 
+		        c.course_name, 
+		        c.credit_category, 
+		        c.course_score, 
+		        c.course_plan,
+		        c.course_current_enrollment,
+		        c.course_max_cnt,
+		        (SELECT CONCAT(ct.course_time_yoil, '/ ', ct.course_time_start, ' - ', ct.course_time_end)
+		         FROM course_time ct
+		         WHERE ct.course_id = c.course_id
+		         LIMIT 1) AS time_slot
+	    FROM  	 course c
+	    JOIN 	 professor p ON c.professor_id = p.professor_id
+	    JOIN 	 dept d ON c.dept_id = d.dept_id
+	    LEFT JOIN registration r ON c.course_id = r.course_id AND r.student_id = #{searchDto.studentId}
+	    WHERE 	 c.course_status = 'OPEN'
+	    AND   	 r.registration_id IS NULL
+	    <if test="searchDto.college != null and searchDto.college != ''">
+	        AND d.college = #{searchDto.college}
+	    </if>
+	    <if test="searchDto.deptId != null and searchDto.deptId != ''">
+	        AND c.dept_id = #{searchDto.deptId}
+	    </if>
+	    <if test="searchDto.courseId != null and searchDto.courseId != ''">
+	        AND c.course_id = #{searchDto.courseId}
+	    </if>
+	    <if test="searchDto.courseName != null and searchDto.courseName != ''">
+	        AND c.course_name LIKE CONCAT('%', #{searchDto.courseName}, '%')
+	    </if>
+	    LIMIT #{paginationDto.offset}, #{paginationDto.itemsPerPage}
+	</select>
+	
+	<insert id="addCourse" parameterType="java.util.Map">
+        INSERT INTO registration (
+            registration_id,
+            student_id,
+            course_id,
+            professor_id,
+            registration_status,
+            registration_create,
+            registration_update
+        ) VALUES (
+            #{registrationId},
+            #{studentId},
+            #{courseId},
+            #{professorId},
+            'Pendinig',
+            now(),
+            now()
+        )
+    </insert>
+    
+    <insert id="addAttendance" parameterType="java.util.Map">
+	    INSERT INTO attendance (
+	        attendance_id,
+	        course_id,
+            student_id,
+            attendance_late,
+            attendance_absent,
+            professor_id,
+	        attendance_remarks,
+	        created_date
+	    )
+	    VALUES (
+	        #{attendanceId},
+	        #{courseId},
+            #{studentId},
+            0,
+            0,
+            #{professorId},
+	        <if test="attendanceRemarks != null">
+	            #{attendanceRemarks},
+	        </if>
+	        <if test="attendanceRemarks == null">
+	            '',
+	        </if>
+	        now()
+	    )
+	</insert>
+    
+    <insert id="addScore" parameterType="java.util.Map">
+	    INSERT INTO score (
+			score_id,	        
+	        student_id,
+	        course_id,
+            professor_id,
+	        dept_id,
+	        score_mid,
+	        score_final,
+	        score_total,
+	        score_grade
+	    )
+	    VALUES (
+	        #{scoreId},
+	        #{studentId},
+	        #{courseId},
+            #{professorId},
+	        #{deptId},
+	        0,
+	        0,
+	        0,
+	        ''
+	    )
+	</insert>
+
+    <!-- 학생정보 조회 -->
+    <select id="getStudentInfo" resultType="java.util.Map">
+        select student_name,
+        	   dept_id	 
+		  from student
+		 where student_id = #{studentId}
+    </select>
+    
+    <update id="updateEnrollment" parameterType="java.util.Map">
+    	update  course
+		set 	course_current_enrollment = #{enrollment}
+		where 	course_id = #{courseId}
+    </update>
+    
+    <!-- 현재 수강생, 정원 조회 -->
+    <select id="getCurrentEnrollment" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT course_current_enrollment, course_max_cnt
+        FROM course
+        where course_id = #{courseId}
+        FOR UPDATE
+    </select>
+    
+    <!-- 최대 score_id의 숫자 부분 조회 -->
+    <select id="getScoreIdNumber" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(score_id, 3) AS UNSIGNED)), 0) AS max_number
+        FROM score
+    </select>
+    
+    <!-- 최대 attendance_id의 숫자 부분 조회 -->
+    <select id="getMaxAttendanceIdNumber" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(attendance_id, 2) AS UNSIGNED)), 0) AS max_number
+        FROM attendance
+    </select>
+    
+    <!-- 최대 registration_id의 숫자 부분 조회 -->
+    <select id="getMaxRegistrationIdNumber" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(registration_id, 2) AS UNSIGNED)), 0) AS max_number
+        FROM registration
+    </select>
+	
+	
+	<select id="searchRegistrationCourses" resultType="RegistrationDto">
+	    SELECT r.registration_id, 
+    		   c.credit_category, 
+    		   c.course_id, 
+    		   c.course_name, 
+    		   c.course_score, 
+    		   p.professor_name,
+    		   ct.course_time_loc,   
+			   CONCAT(ct.course_time_yoil, '/ ', ct.course_time_start, ' - ', ct.course_time_end) as time_slot
+		FROM registration r,
+			  course c,
+			  professor p,
+			  course_time ct
+		WHERE r.student_id = #{studentId}
+		AND   r.course_id = c.course_id
+		AND   c.professor_id = p.professor_id
+		and   c.course_id = ct.course_id
+	</select>
+	
+    <delete id="deleteCourse" parameterType="string">
+        DELETE FROM registration
+        WHERE registration_id = #{registrationId}
+    </delete>
+	
+    <delete id="deleteAttendance" parameterType="java.util.Map">
+        DELETE FROM attendance
+        WHERE course_id = #{courseId}
+        and   student_id = #{studentId}
+    </delete>
+    
+    <delete id="deleteScore" parameterType="java.util.Map">
+        DELETE FROM score
+        WHERE student_id = #{studentId}
+        AND   course_id = #{courseId}
+    </delete>
+	
+	<select id="viewCourseTime" resultType="AttendanceDto" parameterType="string">
+        SELECT s.student_name, c.course_name, p.professor_name, ct.course_time_yoil, ct.course_time_start, ct.course_time_end, ct.course_time_loc 
+        FROM course_time ct,
+             professor p,
+             course c,
+             attendance a,
+             student s
+        WHERE s.student_id = #{studentId}
+        AND s.student_id = a.student_id
+        AND a.course_id = ct.course_id
+        AND ct.course_id = c.course_id
+        AND ct.professor_id = p.professor_id
+    </select>
+    
+</mapper>

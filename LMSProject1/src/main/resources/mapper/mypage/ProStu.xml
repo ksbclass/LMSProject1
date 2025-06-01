@@ -1,0 +1,84 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+
+<mapper namespace="prostu">
+
+<!-- 이름과 이메일로 교수 또는 학생의 id를 조회(union을 이용해 두개의select문을 한번에) -->
+	<select id="findId" resultType="String" parameterType="FindIdDto">
+	SELECT student_id 
+	FROM student
+	WHERE student_name = #{studentName} AND student_email=#{studentEmail}
+	UNION
+	SELECT professor_id 
+	FROM professor
+	WHERE professor_name = #{professorName} AND professor_email=#{professorEmail};
+	</select>
+	
+	<!-- 넘어온 id와 맞는  학생의id,name,pawssword를 추출 -->
+	<select id="loginChk" resultType="java.util.HashMap" parameterType="LoginDto">
+	SELECT student_id , student_name , student_password
+	FROM student
+	WHERE student_id = #{studentId} 
+	UNION
+	SELECT professor_id , professor_name ,professor_password
+	FROM professor
+	WHERE professor_id = #{professorId} 
+	</select>
+	
+	<!-- id와이메일을 이용해 학생의 비밀번호 반환 -->
+	<select id="findPw" resultType="String" parameterType="FindPwDto">
+	SELECT student_password 
+	FROM student
+	WHERE student_id = #{studentId} AND student_email=#{studentEmail}
+	UNION
+	SELECT professor_password
+	FROM professor
+	WHERE professor_id = #{professorId} AND professor_email=#{professorEmail};
+	</select>
+	
+	<!-- 넘겨받은 학생아이디가 일치한다면 넘겨받은 비밀번호로 업데이트 -->
+	<update id="updateStuPw" parameterType="UpdateStuPwDto" >
+		update student set student_password=#{studentNewPassword}
+		where student_id=#{studentId}
+	</update>
+	
+		<!-- 넘겨받은 교수아이디가 일치한다면 넘겨받은 비밀번호로 업데이트 -->
+	<update id="updateProPw" parameterType="UpdateProPwDto">
+		update professor set professor_password=#{professorNewPassword}
+		where  professor_id=#{professorId}
+	</update>
+	
+	<!-- 학생or교수의 아이디를 넘겨받아 학과명 추출 -->
+	<select id="selectDeptName" parameterType="String" resultType="String">
+		select d.dept_name
+		from student s inner join dept d on(s.dept_id = d.dept_id)
+		where s.student_id = #{val}
+		union
+		select d.dept_name
+		from professor p inner join dept d on(p.dept_id = d.dept_id)
+		where p.professor_id = #{val}
+	</select>
+	
+	<!-- 넘겨받은 id에 해당하는 교수의 img , email , phone 업데이트 -->
+	<update id="updateProInfo" parameterType="UpdateProInfoDto">
+	update professor 
+	set professor_img=#{professorImg},
+	professor_email=#{professorEmail},
+	professor_phone=#{professorPhone}
+	where professor_id = #{professorId}
+	</update>
+	
+	<!-- 넘겨받은 id에 해당하는 학생의 img , email , phone 업데이트 -->
+	<update id="updateStuInfo" parameterType="UpdateStuInfoDto">
+	update student 
+	set student_img=#{studentImg},
+	student_email=#{studentEmail},
+	student_phone=#{studentPhone}
+	where student_id = #{studentId}
+	</update>
+	
+	
+
+</mapper>

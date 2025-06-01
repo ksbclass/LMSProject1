@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ScoreMng">
+
+	<select id="getCoursesInfo" parameterType="string" resultType="java.util.Map">
+    	SELECT c.course_name,
+	           c.course_id,
+	           c.course_current_enrollment
+	    FROM   course c
+	    WHERE  1 = 1
+	      AND  c.professor_id = #{professorId}
+	      AND  c.course_status in ('open', 'OPEN')
+	</select>
+    
+    <select id="getScoreInfo" parameterType="java.util.Map" resultType="ScoreMngDto">
+    	select   st.student_id,
+		         st.student_name,
+		         st.student_num,
+				 c.course_name, 
+				 c.course_id,  
+				 c.course_current_enrollment,
+				 c.course_period,
+		         d.dept_name,
+		         p.professor_name,
+		         sc.score_mid,
+		         sc.score_final,
+		         sc.score_total,
+		         sc.score_grade,
+		         sc.score_etc
+		  from   course c,
+				 student st,
+			     dept d,
+			     score sc,
+			     registration r,
+			     professor p
+		 where   1 = 1
+		   and   c.professor_id = #{professorId}
+		   and   c.course_id = #{courseId}
+		   and   c.course_status in ('OPEN', 'open') 
+		   and   c.dept_id = d.dept_id
+		   and   c.professor_id = r.professor_id
+		   and   c.course_id = r.course_id
+		   and   r.student_id = st.student_id
+		   and   r.course_id = sc.course_id
+		   and   r.student_id = sc.student_id
+		   and   sc.course_id = c.course_id
+		   and   p.professor_id = c.professor_id
+		   
+	</select>
+    
+    <select id="getProfessorInfo" resultType="java.util.Map">
+    	select  professor_name, dept_name
+		from    professor p,
+				dept d
+		where   p.professor_id = #{professorId}
+		and     p.dept_id = d.dept_id
+    </select>
+    
+    <update id="updateScore" parameterType="java.util.Map">
+    	update  score
+		   set  score_mid = #{scoreMid},
+				score_final = #{scoreFinal},
+				score_total = #{scoreTotal},
+			    score_grade = #{scoreGrade}
+		 where  student_id = #{studentId}
+		   and  course_id = #{courseId}
+    </update>
+    
+</mapper>

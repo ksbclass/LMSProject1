@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="post">
+
+	<!-- post 레코드 조회 -->
+    <select id="count" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM post
+        <where>
+            post_notice = 0
+            <if test="column != null and find != null and find !=''">
+                AND
+                <choose>
+                    <when test="column == 'authorName'">author_name LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'postTitle'">post_title LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'postContent'">post_content LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'postTitle,authorName'">(post_title LIKE CONCAT('%', #{find}, '%') OR author_name LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'postTitle,postContent'">(post_title LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'authorName,postContent'">(author_name LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'postTitle,authorName,postContent'">(post_title LIKE CONCAT('%', #{find}, '%') OR author_name LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+	<!-- post 테이블 post_notice 조회-->
+    <select id="selectNotices" resultType="Post">
+        SELECT
+            post_id, author_id, author_name, post_password, post_title, post_content,
+            post_created_at, post_updated_at, post_group, post_group_level,
+            post_group_step, post_file, post_read_count, post_notice
+        FROM post
+        WHERE post_notice = 1
+        ORDER BY post_group DESC, post_group_step DESC
+    </select>
+
+	<!--  post 테이블 목록 조회 -->
+    <select id="selectList" parameterType="map" resultType="Post">
+        SELECT
+            post_id, author_id, author_name, post_password, post_title, post_content,
+            post_created_at, post_updated_at, post_group, post_group_level,
+            post_group_step, post_file, post_read_count, post_notice
+        FROM post
+        WHERE post_notice = 0
+        <if test="column != null and find != null and find !=''">
+            AND
+            <choose>
+                <when test="column == 'authorName'">author_name LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'postTitle'">post_title LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'postContent'">post_content LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'postTitle,authorName'">(post_title LIKE CONCAT('%', #{find}, '%') OR author_name LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'postTitle,postContent'">(post_title LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'authorName,postContent'">(author_name LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'postTitle,authorName,postContent'">(post_title LIKE CONCAT('%', #{find}, '%') OR author_name LIKE CONCAT('%', #{find}, '%') OR post_content LIKE CONCAT('%', #{find}, '%'))</when>
+            </choose>
+        </if>
+        ORDER BY post_group DESC, post_group_level ASC, post_group_step ASC, post_created_at DESC
+        LIMIT #{startRow}, #{pageSize}
+    </select>
+
+	<!-- post 테이블 단일 게시글 조회 -->
+    <select id="selectOne" parameterType="string" resultType="Post">
+        SELECT
+            post_id, author_id, author_name, post_password, post_title, post_content,
+            post_created_at, post_updated_at, post_group, post_group_level,
+            post_group_step, post_file, post_read_count, post_notice
+        FROM post
+        WHERE post_id = #{postId}
+    </select>
+
+	<!-- post 테이블 post_read_count 증가-->
+    <update id="incrementReadCount" parameterType="string">
+        UPDATE post SET post_read_count = post_read_count + 1 WHERE post_id = #{postId}
+    </update>
+
+	<!-- post 테이블 post_id 조회-->
+    <select id="getMaxPostId" resultType="string">
+        SELECT MAX(post_id) FROM post
+    </select>
+
+	<!-- post 테이블 post_group 조회-->
+    <select id="getMaxGroup" resultType="int">
+        SELECT MAX(post_group) FROM post
+    </select>
+
+	<!-- post 테이블 post_grpoup 증가-->
+    <update id="updateGroupStep" parameterType="map">
+        UPDATE post SET post_group_step = post_group_step + 1
+       	WHERE post_group = #{postGroup} AND post_group_step > #{postGroupStep}
+    </update>
+
+	<!-- post 테이블 추가-->
+    <insert id="insert" parameterType="Post">
+        INSERT INTO post (
+            post_id, author_id, author_name, post_password, post_title, post_content,
+            post_created_at, post_updated_at, post_group, post_group_level,
+            post_group_step, post_file, post_read_count, post_notice
+        ) VALUES (
+            #{postId}, #{authorId}, #{authorName}, #{postPassword}, #{postTitle}, #{postContent},
+            #{postCreatedAt}, #{postUpdatedAt}, #{postGroup}, #{postGroupLevel},
+            #{postGroupStep}, #{postFile}, #{postReadCount}, #{postNotice}
+        )
+    </insert>
+
+    <!-- post 테이블 수정-->
+    <update id="update" parameterType="Post">
+        UPDATE post SET
+            author_id = #{authorId}, author_name = #{authorName}, post_password = #{postPassword},
+            post_title = #{postTitle}, post_content = #{postContent}, post_file = #{postFile},
+            post_updated_at = #{postUpdatedAt}, post_notice = #{postNotice}
+        WHERE post_id = #{postId}
+    </update>
+
+	<!-- post 테이블 삭제-->
+    <delete id="delete" parameterType="string">
+        DELETE FROM post WHERE post_id = #{postId}
+    </delete>
+
+	<!-- post_comment 게시글 댓글 삭제 -->
+    <delete id="deleteCommentsByPostId" parameterType="string">
+        DELETE FROM post_comment WHERE post_id = #{postId}
+    </delete>
+	
+	<!-- post_comment 테이블 추가-->
+    <insert id="insertComment" parameterType="PostComment">
+        INSERT INTO post_comment (
+            comment_id, post_id, writer_id, comment_author_name, comment_content, parent_comment_id,
+            created_at, updated_at
+        ) VALUES (
+            #{commentId}, #{postId}, #{writerId}, #{commentAuthorName}, #{commentContent}, #{parentCommentId},
+            #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+	<!-- post_comment 테이블 목록 조회-->
+    <select id="selectCommentList" parameterType="string" resultType="PostComment">
+        SELECT
+            comment_id, post_id, writer_id, comment_author_name, comment_content, parent_comment_id,
+            created_at, updated_at
+        FROM post_comment
+        WHERE post_id = #{postId}
+        ORDER BY created_at ASC
+    </select>
+
+    <!-- post_comment 테이블 단일 댓글 조회-->
+    <select id="selectComment" parameterType="string" resultType="PostComment">
+        SELECT comment_id, post_id, writer_id, comment_author_name, comment_content, parent_comment_id, created_at, updated_at
+        FROM post_comment
+        WHERE comment_id = #{commentId}
+    </select>
+
+    <!-- post_comment 테이블 수정-->
+    <update id="updateComment" parameterType="PostComment">
+        UPDATE post_comment
+        SET writer_id = #{writerId}, comment_author_name = #{commentAuthorName}, comment_content = #{commentContent}, updated_at = #{updatedAt}
+        WHERE comment_id = #{commentId}
+    </update>
+
+    <!-- post_comment 테이블 삭제-->
+    <delete id="deleteComment" parameterType="string">
+        DELETE FROM post_comment WHERE comment_id = #{commentId}
+    </delete>
+
+	<!-- post_comment 테이블 comment_id 조회-->
+    <select id="getMaxCommentId" resultType="string">
+        SELECT MAX(comment_id) FROM post_comment
+    </select>
+
+	<!-- post 테이블 post_id 조회-->
+    <select id="getAllPostIds" resultType="string">
+        SELECT post_id FROM post
+    </select>
+</mapper>

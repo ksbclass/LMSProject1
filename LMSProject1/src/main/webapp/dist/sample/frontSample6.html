@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교수지원(성적관리)</title>
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+<style>
+.btn-custom {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	padding: 5px 10px;
+}
+
+.btn-custom:hover {
+	background-color: #0056b3;
+}
+
+.table-custom th {
+	background-color: #f8f9fa;
+	font-weight: bold;
+}
+
+.grade-details {
+	margin-top: 20px;
+	transition: opacity 0.3s ease;
+}
+</style>
+</head>
+<body>
+	<div class="container">
+		<div class="mb-4">
+			<h4>교수: 김교수 | 학과: 컴퓨터공학과</h4>
+		</div>
+
+		<div class="card">
+			<h5 class="mb-3">과목 목록 (2025-1학기)</h5>
+			<table class="table table-striped table-hover table-custom"
+				id="courseTable">
+				<thead>
+					<tr>
+						<th>과목명</th>
+						<th>과목 코드</th>
+						<th>수강생 수</th>
+						<th>성적 관리</th>
+					</tr>
+				</thead>
+				<tbody id="courseList">
+					<!-- 서버에서 동적으로 채움 -->
+				</tbody>
+			</table>
+		</div>
+
+		<div class="card grade-details" id="gradeDetails"
+			style="display: none;">
+			<h5 class="mb-3" id="courseTitle"></h5>
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>이름</th>
+						<th>학번</th>
+						<th>전공</th>
+						<th>중간고사</th>
+						<th>기말고사</th>
+						<th>총점</th>
+						<th>등급</th>
+						<th>이의신청</th>
+					</tr>
+				</thead>
+				<tbody id="gradeList">
+					<!-- 서버에서 동적으로 채움 -->
+				</tbody>
+			</table>
+			<div class="d-flex justify-content-end mt-3">
+				<button class="btn btn-custom" id="saveGrades">등록</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+        $(document).ready(function() {
+            // 초기 과목 목록 로드
+            $.ajax({
+                url: '${path}/api/courses', // 서버 API 엔드포인트
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    let courseList = $('#courseList');
+                    courseList.empty();
+                    $.each(data, function(index, course) {
+                        courseList.append(`
+                            <tr>
+                                <td>${course.courseName}</td>
+                                <td>${course.courseCode}</td>
+                                <td>${course.studentCount}</td>
+                                <td><a href="#" class="btn-link-custom manage-link" data-course="${course.courseId}">관리</a></td>
+                            </tr>
+                        `);
+                    });
+
+                    // 관리 링크 클릭 이벤트
+                    $('.manage-link').on('click', function(e) {
+                        e.preventDefault();
+                        const courseId = $(this).data('course');
+                        loadGradeDetails(courseId);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading courses:', error);
+                }
+            });
+
+            // 성적 상세 로드 함수
+            function loadGradeDetails(courseId) {
+                $.ajax({
+                    url: '${path}/api/grades?courseId=' + courseId,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        $('#gradeDetails').show();
+                        $('#courseTitle').text(`과목: ${data.courseName} (2025-1학기) | 교수: 김교수`);
+                        let gradeList = $('#gradeList');
+                        gradeList.empty();
+                        $.each(data.grades, function(index, grade) {
+                            gradeList.append(`
+                                <tr>
+                                    <td>${grade.name}</td>
+                                    <td>${grade.studentId}</td>
+                                    <td>${grade.major}</td>
+                                    <td>${grade.midterm}</td>
+                                    <td>${grade.final}</td>
+                                    <td>${grade.total}</td>
+                                    <td>${grade.grade}</td>
+                                    <td><a href="#" class="btn-link-custom">[신청]</a></td>
+                                </tr>
+                            `);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading grades:', error);
+                    }
+                });
+            }
+
+            // 등록 버튼 클릭 이벤트
+            $('#saveGrades').on('click', function() {
+                alert('성적이 등록되었습니다.'); // 실제 서버 호출로 대체 가능
+            });
+        });
+    </script>
+</body>
+</html>

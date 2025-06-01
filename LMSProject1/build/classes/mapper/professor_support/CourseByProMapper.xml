@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CourseByPro">
+	
+	<!-- 최대 course_id의 숫자 부분 조회 -->
+    <select id="getMaxcourseIdNumber" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(course_id, 2) AS UNSIGNED)), 0) AS max_number
+        FROM course
+    </select>
+    
+    <!-- 최대 courseTime_id의 숫자 부분 조회 -->
+    <select id="getMaxcourseTimeIdNumber" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(course_time_id, 3) AS UNSIGNED)), 0) AS max_number
+        FROM course_time
+    </select>
+    
+    <insert id="insertCourseInfo" parameterType="RegistCourseDto">
+        INSERT INTO course (
+            course_id,
+            dept_id,
+            professor_id,
+            course_name,
+            course_status,
+            course_current_enrollment,
+            course_max_cnt,
+            course_score,
+            credit_category,
+            course_period,
+            course_plan
+        ) VALUES (
+            #{courseId},
+            #{deptId},
+            #{professorId},
+            #{courseName},
+            #{courseStatus},
+            0,
+            #{courseMaxCnt},
+            #{courseScore},
+            #{creditCategory},
+            #{coursePeriod},
+            #{coursePlan}
+        )
+    </insert>
+
+    <insert id="insertCourseTime" parameterType="RegistCourseDto">
+        INSERT INTO course_time (
+            course_time_id,
+            professor_id,
+            course_id,
+            course_time_yoil,
+            course_time_loc,
+            course_time_start,
+            course_time_end
+        ) VALUES (
+            #{courseTimeId},
+            #{professorId},
+            #{courseId},
+            #{courseTimeYoil},
+            #{courseTimeLoc},
+            #{courseTimeStart},
+            #{courseTimeEnd}
+        )
+    </insert>
+    
+    <select id="getCourseCountRows" resultType="int" parameterType="java.util.Map">
+    	select count(*)
+		  from course c,
+			   course_time ct
+	     where 1=1
+		   and c.professor_id = #{professorId}
+		   and c.professor_id = ct.professor_id
+		   and c.course_id = ct.course_id
+	   	<if test="search != null and search != ''">
+           and courseName LIKE '%${search}%'
+	    </if>
+    </select>
+    
+    <select id="searchCourseInfo" parameterType="PaginationDto" resultType="RegistCourseDto">
+        SELECT
+        c.professor_id,
+        c.dept_id,
+        c.course_id,
+        c.course_name,
+        upper(c.course_status) course_status,
+        c.course_current_enrollment,
+        c.course_max_cnt,
+        c.course_score,
+        c.credit_category,
+        c.course_period,
+        c.course_plan,
+		
+  		ct.course_time_id,
+  		ct.course_time_loc,	        
+        ct.course_time_yoil,
+        ct.course_time_start,
+        ct.course_time_end
+        FROM
+        course c
+        INNER JOIN course_time ct
+        ON c.course_id = ct.course_id 
+        WHERE c.professor_id = #{professorId}
+        <if test="search != null and search != ''">
+            AND c.course_name LIKE '%${search}%'
+        </if>
+        <if test="sortDirection == null or sortDirection == ''">
+        	ORDER BY c.course_name
+        </if>
+        <if test="sortDirection != null and sortDirection != ''">
+            ORDER BY
+            <choose>
+                <when test="sortDirection.startsWith('courseName')">c.course_name</when>
+                <when test="sortDirection.startsWith('courseScore')">c.course_score</when>
+                <otherwise>c.course_name</otherwise>
+            </choose>
+            <if test="sortDirection.endsWith('-desc')">DESC</if>
+        </if>
+        LIMIT #{offset}, #{itemsPerPage}
+	</select>
+	
+	
+    <select id="countEnrollments" resultType="int">
+        SELECT course_current_enrollment 
+		FROM   course
+		WHERE  course_id = #{courseId}
+    </select>
+	
+	<update id="changeCourse" parameterType="java.util.Map">
+		UPDATE course
+	    <set>
+	        <choose>
+	            <when test="courseStatus == 'CLOSED'">
+	                course_status = 'OPEN',
+	            </when>
+	            <when test="courseStatus == 'OPEN'">
+	                course_status = 'CLOSED',
+	            </when>
+	        </choose>
+	        </set>
+	    WHERE course_id = #{courseId}
+	</update>
+	
+	<!-- course 테이블 업데이트 -->
+    <update id="updateCourseInfo" parameterType="RegistCourseDto">
+        UPDATE course
+        SET course_name = #{courseName},
+            course_max_cnt = #{courseMaxCnt},
+            course_score = #{courseScore},
+            credit_category = #{creditCategory},
+            course_period = #{coursePeriod},
+            course_plan = #{coursePlan}
+        WHERE course_id = #{courseId}
+    </update>
+
+    <!-- course_time 테이블 업데이트 -->
+    <update id="updateCourseTimeInfo" parameterType="RegistCourseDto">
+        UPDATE course_time
+        SET course_time_yoil = #{courseTimeYoil},
+            course_time_loc = #{courseTimeLoc},
+            course_time_start = #{courseTimeStart},
+            course_time_end = #{courseTimeEnd}
+        WHERE course_time_id = #{courseTimeId}
+    </update>
+    
+    <!-- course 테이블 삭제 -->
+    <delete id="deleteCourseInfo">
+        DELETE 
+        FROM  course
+        WHERE course_id = #{courseId}
+    </delete>
+    
+    <!-- course_time 테이블 삭제 -->
+    <delete id="deleteCourseTimeInfo">
+        DELETE 
+        FROM  course_time
+        WHERE course_id = #{course_Id}
+    </delete>
+    
+    <!-- score 테이블 삭제 -->
+    <delete id="deleteScore">
+        DELETE 
+        FROM  score
+        WHERE course_id = #{course_Id}
+    </delete>
+	
+</mapper>

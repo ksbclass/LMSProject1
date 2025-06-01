@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org/DTD config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!-- config파일에서 사용되는 환경변수 설정 -->
+  <properties resource="mapper/mybatis.properties" />
+  
+	<!-- 설정 추가 -->
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+  
+  <!-- 별명들 -->
+  <typeAliases>
+  	<typeAlias type="domain.Professor" alias="Professor" />
+  	<typeAlias type="domain.Post" alias="Post" />
+  	<typeAlias type="domain.PostComment" alias="PostComment" />
+  	<typeAlias type="domain.Notice" alias="Notice" />
+  	<typeAlias type="model.dto.board.NoticeDto" alias="Noticedto"/>
+  	<typeAlias type="domain.Course" alias="Course" />
+  	<typeAlias type="domain.CourseTime" alias="CourseTime" />
+  	<typeAlias type="domain.Dept" alias="Dept" />
+  	<typeAlias type="domain.Score" alias="Score" />
+  	<typeAlias type="domain.Student" alias="Student" />
+  	<typeAlias type="domain.Schedule" alias="Schedule" />
+  	
+  	<typeAlias type="model.dto.mypage.FindIdDto" alias="FindIdDto" />
+  	<typeAlias type="model.dto.mypage.FindPwDto" alias="FindPwDto" />
+  	<typeAlias type="model.dto.mypage.LoginDto" alias="LoginDto" />
+  	<typeAlias type="model.dto.mypage.UpdateProPwDto" alias="UpdateProPwDto" />
+  	<typeAlias type="model.dto.mypage.UpdateStuPwDto" alias="UpdateStuPwDto" />
+  	<typeAlias type="model.dto.mypage.UpdateStuInfoDto" alias="UpdateStuInfoDto" />
+  	<typeAlias type="model.dto.mypage.UpdateProInfoDto" alias="UpdateProInfoDto" />
+  	<typeAlias type="model.dto.mypage.DeleteUserDto" alias="DeleteUserDto" />
+  	<typeAlias type="model.dto.mypage.GetScoresDto" alias="GetScoresDto" />
+  	
+  	<typeAlias type="domain.Registration" alias="Registration" />
+  	<typeAlias type="domain.Attendance" alias="Attendance" />
+  	<typeAlias type="model.dto.learning_support.DeptDto" alias="DeptDto" />
+  	<typeAlias type="model.dto.learning_support.CourseDto" alias="CourseDto" />
+  	<typeAlias type="model.dto.learning_support.SearchDto" alias="SearchDto" />
+  	<typeAlias type="model.dto.learning_support.RegistrationDto" alias="RegistrationDto" />
+    <typeAlias type="model.dto.learning_support.AttendanceDto" alias="AttendanceDto" />
+    <typeAlias type="model.dto.learning_support.CoursePagingDto" alias="CoursePagingDto" />
+    
+    <typeAlias type="model.dto.professor_support.RegistCourseDto" alias="RegistCourseDto" />
+    <typeAlias type="model.dto.professor_support.PaginationDto" alias="PaginationDto" />
+    <typeAlias type="model.dto.professor_support.ScoreMngDto" alias="ScoreMngDto" />
+   	<typeAlias type="model.dto.professor_support.AttendanceDataDto" alias="AttendanceDataDto" />
+  </typeAliases>								 
+  
+  <!-- Connection 객체  -->
+  <environments default="development">
+    <environment id="development">
+      <transactionManager type="JDBC" />
+      <dataSource type="POOLED" >
+         <property name="driver" value="${driver}"/>
+         <property name="url" value="${url}"/>
+         <property name="username" value="${username}"/>
+         <property name="password" value="${password}"/>
+      </dataSource>
+    </environment>
+  </environments>
+  <!-- 위에서 ${}로 properties에서 지정한값들을 가져온다 -->
+  
+  <!--  sql 구문을 가진 파일 목록 -->
+  <mappers>
+  	<mapper resource="mapper/board/PostMapper.xml"/> 
+  	<mapper resource="mapper/board/NoticeMapper.xml"/>
+  	<mapper resource="mapper/mypage/StudentMapper.xml"/>
+  	<mapper resource="mapper/mypage/ProfessorMapper.xml"/>
+  	<mapper resource="mapper/mypage/ProStu.xml"/>
+  	<mapper resource="mapper/mypage/DeptMapper.xml"/>
+  	<mapper resource="mapper/mypage/ScoreMapper.xml"/>
+  	<mapper resource="mapper/mypage/ScheduleMapper.xml"/>
+  	
+  	<mapper resource="mapper/learning_support/CourseMapper.xml"/>
+	<mapper resource="mapper/professor_support/CourseByProMapper.xml"/>
+	<mapper resource="mapper/professor_support/ScoreMngMapper.xml"/>
+	<mapper resource="mapper/professor_support/ManageAttendanceMapper.xml"/>
+
+  	
+  </mappers>
+
+</configuration>

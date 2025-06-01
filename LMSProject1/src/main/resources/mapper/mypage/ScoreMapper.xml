@@ -1,0 +1,14 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<!-- 학생의아이디를 받아 성적조회에 필요한 테이블을 조인 후 꺼내기 -->
+<mapper namespace="getScore">
+	<select id="getScore" parameterType="String" resultType="GetScoresDto">
+		SELECT  p.professor_name , c.course_id  , c.course_name , c.course_score , s.score_mid , s.score_final , s.score_total , s.score_grade
+		,c.course_period
+			FROM score s JOIN professor p  ON(s.professor_id = p.professor_id) 
+ 			 JOIN course c ON (s.course_id = c.course_id)
+			WHERE s.student_id=#{val};
+	</select>
+</mapper>

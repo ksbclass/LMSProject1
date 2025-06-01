@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="schedule">
+
+    <!-- 모든 일정 조회 -->
+    <select id="listAll" resultType="Schedule">
+        SELECT schedule_id, schedule_date, schedule_title, schedule_description
+        FROM schedule
+        ORDER BY schedule_date
+    </select>
+
+    <!-- 특정 ID의 일정 조회 -->
+    <select id="selectOneById" parameterType="int" resultType="Schedule">
+        SELECT schedule_id, schedule_date, schedule_title, schedule_description
+        FROM schedule
+        WHERE schedule_id = #{scheduleId}
+    </select>
+
+    <!-- 일정 삭제 -->
+    <delete id="delete" parameterType="int">
+        DELETE FROM schedule
+        WHERE schedule_id = #{scheduleId}
+    </delete>
+
+    <!-- 일정 업데이트 -->
+    <update id="update" parameterType="Schedule">
+        UPDATE schedule
+        SET
+            schedule_date = #{scheduleDate},
+            schedule_title = #{scheduleTitle},
+            schedule_description = #{scheduleDescription}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+</mapper>

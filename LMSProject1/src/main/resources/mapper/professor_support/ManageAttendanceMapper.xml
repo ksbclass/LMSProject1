@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="MngAttendance">
+
+	<select id="getCoursesInfoByPro" parameterType="string" resultType="java.util.Map">
+    	SELECT c.course_name,
+	           c.course_id,
+	           c.course_period,
+	           c.course_current_enrollment
+	    FROM   course c
+	    WHERE  1 = 1
+	      AND  c.professor_id = #{professorId}
+	      AND  c.course_status in ('open', 'OPEN')
+	</select>
+    
+    <!-- 데이터 조회 -->
+    <select id="getAttendance" resultType="java.util.Map" parameterType="AttendanceDataDto">
+	    
+	    SELECT 		r.student_id,
+		            s.student_name,
+		            a.attendance_id,
+		            a.attendance_late,
+		            a.attendance_absent,
+		            a.attendance_remarks,
+		            ah.attendance_history_date,
+		            ah.attendance_history_status
+        FROM    	registration r
+        JOIN    	student s ON r.student_id = s.student_id
+        JOIN    	attendance a ON r.student_id = a.student_id 
+        AND     	r.course_id = a.course_id
+        LEFT JOIN 	attendance_history ah ON a.attendance_id = ah.attendance_id 
+        AND 		ah.attendance_history_date = #{attendanceDate}
+        WHERE 		r.course_id = #{courseId}
+    </select>
+    
+    <insert id="insertAttendanceHistory" parameterType="java.util.Map">
+        INSERT INTO attendance_history (attendance_id, attendance_history_date, attendance_history_status, updated_date)
+        VALUES (#{attendanceId}, #{attendanceDate}, #{attendanceStatus}, now())
+        ON DUPLICATE KEY UPDATE
+            attendance_history_status = VALUES(attendance_history_status)
+    </insert>
+    
+    <update id="updateAttendance" parameterType="java.util.Map">
+    	UPDATE attendance
+		   SET attendance_late = (SELECT COUNT(*)
+						          FROM attendance_history ah
+						          WHERE ah.attendance_id = #{attendanceId}
+						          AND ah.attendance_history_status = '지각'
+							      ),
+		       attendance_absent = (SELECT COUNT(*)
+						             FROM attendance_history ah
+						             WHERE ah.attendance_id = #{attendanceId}
+						             AND ah.attendance_history_status = '결석'
+		        					)
+	    WHERE  attendance_id = #{attendanceId}
+    </update>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</mapper>

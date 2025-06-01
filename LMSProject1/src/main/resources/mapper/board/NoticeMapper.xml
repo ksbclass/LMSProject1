@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notice">
+	<!-- notice 레코드 갯수 조회 -->
+    <select id="count" resultType="int" parameterType="map">
+        SELECT COUNT(*) FROM notice
+        <where>
+            <if test="column != null and find != null and find != ''">
+                <choose>
+                    <when test="column == 'writerName'">writer_name LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'noticeTitle'">notice_title LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'noticeContent'">notice_content LIKE CONCAT('%', #{find}, '%')</when>
+                    <when test="column == 'noticeTitle,writerName'">(notice_title LIKE CONCAT('%', #{find}, '%') OR writer_name LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'noticeTitle,noticeContent'">(notice_title LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'writerName,noticeContent'">(writer_name LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+                    <when test="column == 'noticeTitle,writerName,noticeContent'">(notice_title LIKE CONCAT('%', #{find}, '%') OR writer_name LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+	<!-- notice 테이블 목록 조회 -->
+    <select id="selectList" resultType="Notice" parameterType="map">
+        SELECT 
+            notice_id, writer_id, writer_name, notice_password, notice_title, notice_content,
+            notice_created_at, notice_updated_at, notice_file, notice_read_count
+        FROM notice
+        <if test="column != null and find != null">
+            WHERE
+            <choose>
+                <when test="column == 'writerName'">writer_name LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'noticeTitle'">notice_title LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'noticeContent'">notice_content LIKE CONCAT('%', #{find}, '%')</when>
+                <when test="column == 'noticeTitle,writerName'">(notice_title LIKE CONCAT('%', #{find}, '%') OR writer_name LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'noticeTitle,noticeContent'">(notice_title LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'writerName,noticeContent'">(writer_name LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+                <when test="column == 'noticeTitle,writerName,noticeContent'">(notice_title LIKE CONCAT('%', #{find}, '%') OR writer_name LIKE CONCAT('%', #{find}, '%') OR notice_content LIKE CONCAT('%', #{find}, '%'))</when>
+            </choose>
+        </if>
+        ORDER BY notice_created_at DESC
+        LIMIT #{startRow}, #{pageSize}
+    </select>
+
+	<!-- notice 테이블 추가-->
+    <insert id="insert" parameterType="Notice">
+        INSERT INTO notice (
+            notice_id, writer_id, writer_name, notice_password, notice_title, notice_content,
+            notice_file, notice_created_at, notice_updated_at, notice_read_count
+        ) VALUES (
+            #{noticeId}, #{writerId}, #{writerName}, #{noticePassword}, #{noticeTitle},
+            #{noticeContent}, #{noticeFile}, #{noticeCreatedAt}, #{noticeUpdatedAt}, #{noticeReadCount}
+        )
+    </insert>
+
+	<!-- notice 테이블 notice_id  숫자번호 조회 -->
+    <select id="getMaxNoticeId" resultType="string">
+        SELECT MAX(notice_id) FROM notice
+    </select>
+	
+	<!-- 단일 공지사항 조회-->
+    <select id="selectOne" resultType="Notice" parameterType="string">
+        SELECT 
+            notice_id, writer_id, writer_name, notice_password, notice_title, notice_content,
+            notice_created_at, notice_updated_at, notice_file, notice_read_count
+        FROM notice
+        WHERE notice_id = #{noticeId}
+    </select>
+
+	<!-- notice 테이블 조회수 증가 -->
+    <update id="incrementReadCount" parameterType="string">
+        UPDATE notice 
+        SET notice_read_count = notice_read_count + 1
+        WHERE notice_id = #{noticeId}
+    </update>
+
+	<!-- notice 테이블 삭제 -->
+    <delete id="delete" parameterType="string">
+        DELETE FROM notice WHERE notice_id = #{noticeId}
+    </delete>
+	
+	<!-- notice 테이블 수정 -->
+    <update id="update" parameterType="Notice">
+        UPDATE notice
+        SET writer_id = #{writerId},
+            writer_name = #{writerName},
+            notice_password = #{noticePassword},
+            notice_title = #{noticeTitle},
+            notice_content = #{noticeContent},
+            notice_file = #{noticeFile},
+            notice_updated_at = #{noticeUpdatedAt}
+        WHERE notice_id = #{noticeId}
+    </update>
+    
+    <!-- notice 목록 전체  -->
+     <select id="selectListAll" resultType="Notice">
+        SELECT
+            notice_id, writer_id, writer_name, notice_password, notice_title, notice_content,
+            notice_created_at, notice_updated_at, notice_file, notice_read_count
+        FROM notice
+        ORDER BY notice_created_at DESC
+    </select>
+</mapper>
